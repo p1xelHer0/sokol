@@ -20,6 +20,7 @@ module_names = {
     'sgl_':     'gl',
     'sdtx_':    'debugtext',
     'sshape_':  'shape',
+    'simgui_':  'imgui',
     'sglue_':   'glue',
 }
 
@@ -62,7 +63,20 @@ system_libs = {
         'linux': {
             'gl': '"system:asound", "system:dl", "system:pthread"',
         }
-    }
+    },
+    'simgui_': {
+        'windows': {
+            'd3d11': "",
+            'gl': "",
+        },
+        'macos': {
+            'metal': '"system:Cocoa.framework","system:QuartzCore.framework","system:Metal.framework","system:MetalKit.framework"',
+            'gl': '"system:Cocoa.framework","system:QuartzCore.framework","system:OpenGL.framework"'
+        },
+        'linux': {
+            'gl': '"system:GL", "system:dl", "system:pthread"'
+        }
+    },
 }
 
 c_source_names = {
@@ -75,6 +89,7 @@ c_source_names = {
     'sgl_':     'sokol_gl.c',
     'sdtx_':    'sokol_debugtext.c',
     'sshape_':  'sokol_shape.c',
+    'simgui_':  'sokol_imgui.c',
     'sglue_':   'sokol_glue.c',
 }
 
