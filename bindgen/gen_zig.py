@@ -21,6 +21,8 @@ module_names = {
     'sdtx_':    'debugtext',
     'sshape_':  'shape',
     'sglue_':   'glue',
+    'sfetch_':  'fetch',
+    'simgui_':  'imgui',
 }
 
 c_source_paths = {
@@ -33,6 +35,8 @@ c_source_paths = {
     'sdtx_':    'sokol-zig/src/sokol/c/sokol_debugtext.c',
     'sshape_':  'sokol-zig/src/sokol/c/sokol_shape.c',
     'sglue_':   'sokol-zig/src/sokol/c/sokol_glue.c',
+    'sfetch_':  'sokol-zig/src/sokol/c/sokol_fetch.c',
+    'simgui_':  'sokol-zig/src/sokol/c/sokol_imgui.c',
 }
 
 ignores = [
@@ -52,7 +56,7 @@ overrides = {
     'sgl_error':                            'sgl_get_error',   # 'error' is reserved in Zig
     'sgl_deg':                              'sgl_as_degrees',
     'sgl_rad':                              'sgl_as_radians',
-    'sg_apply_uniforms.ub_index':           'uint32_t',
+    'sg_apply_uniforms.ub_slot':            'uint32_t',
     'sg_draw.base_element':                 'uint32_t',
     'sg_draw.num_elements':                 'uint32_t',
     'sg_draw.num_instances':                'uint32_t',
@@ -60,6 +64,8 @@ overrides = {
     'sshape_element_range_t.num_elements':  'uint32_t',
     'sdtx_font.font_index':                 'uint32_t',
     'SGL_NO_ERROR':                         'SGL_ERROR_NO_ERROR',
+    'sfetch_continue':                      'continue_fetching',  # 'continue' is reserved in Zig
+    'sfetch_desc':                          'sfetch_get_desc'     # 'desc' shadowed by earlier definition
 }
 
 prim_types = {
@@ -456,24 +462,43 @@ def gen_helpers(inp):
     l('fn cStrToZig(c_str: [*c]const u8) [:0]const u8 {')
     l('    return @import("std").mem.span(c_str);')
     l('}')
-    if inp['prefix'] in ['sg_', 'sdtx_', 'sshape_']:
+    if inp['prefix'] in ['sg_', 'sdtx_', 'sshape_', 'sfetch_']:
         l('// helper function to convert "anything" to a Range struct')
         l('pub fn asRange(val: anytype) Range {')
         l('    const type_info = @typeInfo(@TypeOf(val));')
-        l('    switch (type_info) {')
-        l('        .Pointer => {')
-        l('            switch (type_info.Pointer.size) {')
-        l('                .One => return .{ .ptr = val, .size = @sizeOf(type_info.Pointer.child) },')
-        l('                .Slice => return .{ .ptr = val.ptr, .size = @sizeOf(type_info.Pointer.child) * val.len },')
-        l('                else => @compileError("FIXME: Pointer type!"),')
-        l('            }')
-        l('        },')
-        l('        .Struct, .Array => {')
-        l('            @compileError("Structs and arrays must be passed as pointers to asRange");')
-        l('        },')
-        l('        else => {')
-        l('            @compileError("Cannot convert to range!");')
-        l('        },')
+        l('    // FIXME: naming convention change between 0.13 and 0.14-dev')
+        l('    if (@hasField(@TypeOf(type_info), "Pointer")) {')
+        l('        switch (type_info) {')
+        l('            .Pointer => {')
+        l('                switch (type_info.Pointer.size) {')
+        l('                    .One => return .{ .ptr = val, .size = @sizeOf(type_info.Pointer.child) },')
+        l('                    .Slice => return .{ .ptr = val.ptr, .size = @sizeOf(type_info.Pointer.child) * val.len },')
+        l('                    else => @compileError("FIXME: Pointer type!"),')
+        l('                }')
+        l('            },')
+        l('            .Struct, .Array => {')
+        l('                @compileError("Structs and arrays must be passed as pointers to asRange");')
+        l('            },')
+        l('            else => {')
+        l('                @compileError("Cannot convert to range!");')
+        l('            },')
+        l('        }')
+        l('    } else {')
+        l('        switch (type_info) {')
+        l('            .pointer => {')
+        l('                switch (type_info.pointer.size) {')
+        l('                    .One => return .{ .ptr = val, .size = @sizeOf(type_info.pointer.child) },')
+        l('                    .Slice => return .{ .ptr = val.ptr, .size = @sizeOf(type_info.pointer.child) * val.len },')
+        l('                    else => @compileError("FIXME: Pointer type!"),')
+        l('                }')
+        l('            },')
+        l('            .@"struct", .array => {')
+        l('                @compileError("Structs and arrays must be passed as pointers to asRange");')
+        l('            },')
+        l('            else => {')
+        l('                @compileError("Cannot convert to range!");')
+        l('            },')
+        l('        }')
         l('    }')
         l('}')
         l('')

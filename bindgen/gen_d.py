@@ -23,6 +23,8 @@ module_names = {
     'sdtx_':    'debugtext',
     'sshape_':  'shape',
     'sglue_':   'glue',
+    'sfetch_':  'fetch',
+    'simgui_':  'imgui',
 }
 
 c_source_paths = {
@@ -35,6 +37,8 @@ c_source_paths = {
     'sdtx_':    'sokol-d/src/sokol/c/sokol_debugtext.c',
     'sshape_':  'sokol-d/src/sokol/c/sokol_shape.c',
     'sglue_':   'sokol-d/src/sokol/c/sokol_glue.c',
+    'sfetch_':  'sokol-d/src/sokol/c/sokol_fetch.c',
+    'simgui_':  'sokol-d/src/sokol/c/sokol_imgui.c',
 }
 
 ignores = [
@@ -53,9 +57,7 @@ overrides = {
     'sgl_error':                            'sgl_get_error',   # 'error' is reserved in Dlang
     'sgl_deg':                              'sgl_as_degrees',
     'sgl_rad':                              'sgl_as_radians',
-    'sg_context_desc.color_format':         'int',
-    'sg_context_desc.depth_format':         'int',
-    'sg_apply_uniforms.ub_index':           'uint32_t',
+    'sg_apply_uniforms.ub_slot':            'uint32_t',
     'sg_draw.base_element':                 'uint32_t',
     'sg_draw.num_elements':                 'uint32_t',
     'sg_draw.num_instances':                'uint32_t',
@@ -63,6 +65,7 @@ overrides = {
     'sshape_element_range_t.num_elements':  'uint32_t',
     'sdtx_font.font_index':                 'uint32_t',
     'SGL_NO_ERROR':                         'SGL_ERROR_NO_ERROR',
+    'sfetch_continue':                      'continue_fetching',  # 'continue' is reserved in D
 }
 
 prim_types = {

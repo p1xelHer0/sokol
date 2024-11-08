@@ -498,7 +498,7 @@
 
         After the user callback returns, and all file data has been loaded
         (response.finished flag is set) the request has reached its end-of-life
-        and will recycled.
+        and will be recycled.
 
         Otherwise, if there's still data to load (because streaming was
         requested by providing a non-zero request.chunk_size), the request
@@ -610,7 +610,7 @@
     without downloading the entire file first (the Content-Length response
     header only provides the compressed size). Furthermore, for HTTP
     range-requests, the range is given on the compressed data, not the
-    uncompressed data. So if the web server decides to server the data
+    uncompressed data. So if the web server decides to serve the data
     compressed, the content-length and range-request parameters don't
     correspond to the uncompressed data that's arriving in the sokol-fetch
     buffers, and there's no way from JS or WASM to either force uncompressed
@@ -671,7 +671,7 @@
     When a request is sent to a channel via sfetch_send(), a "free lane" will
     be picked and assigned to the request. The request will occupy this lane
     for its entire life time (also while it is paused). If all lanes of a
-    channel are currently occupied, new requests will need to wait until a
+    channel are currently occupied, new requests will wait until a
     lane becomes unoccupied.
 
     Since the number of channels and lanes is known upfront, it is guaranteed
@@ -800,7 +800,7 @@
 
     On platforms with threading support, each channel runs on its own
     thread, but this is mainly an implementation detail to work around
-    the blocking traditional file IO functions, not for performance reasons.
+    the traditional blocking file IO functions, not for performance reasons.
 
 
     MEMORY ALLOCATION OVERRIDE
@@ -1071,17 +1071,14 @@ typedef struct sfetch_response_t {
     sfetch_range_t buffer;          // the user-provided buffer which holds the fetched data
 } sfetch_response_t;
 
-/* response callback function signature */
-typedef void(*sfetch_callback_t)(const sfetch_response_t*);
-
 /* request parameters passed to sfetch_send() */
 typedef struct sfetch_request_t {
-    uint32_t channel;               // index of channel this request is assigned to (default: 0)
-    const char* path;               // filesystem path or HTTP URL (required)
-    sfetch_callback_t callback;     // response callback function pointer (required)
-    uint32_t chunk_size;            // number of bytes to load per stream-block (optional)
-    sfetch_range_t buffer;          // a memory buffer where the data will be loaded into (optional)
-    sfetch_range_t user_data;       // ptr/size of a POD user data block which will be memcpy'd (optional)
+    uint32_t channel;                                // index of channel this request is assigned to (default: 0)
+    const char* path;                                // filesystem path or HTTP URL (required)
+    void (*callback) (const sfetch_response_t*);     // response callback function pointer (required)
+    uint32_t chunk_size;                             // number of bytes to load per stream-block (optional)
+    sfetch_range_t buffer;                           // a memory buffer where the data will be loaded into (optional)
+    sfetch_range_t user_data;                        // ptr/size of a POD user data block which will be memcpy'd (optional)
 } sfetch_request_t;
 
 /* setup sokol-fetch (can be called on multiple threads) */
@@ -1204,6 +1201,11 @@ inline sfetch_handle_t sfetch_send(const sfetch_request_t& request) { return sfe
     #define _SFETCH_HAS_THREADS (1)
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4724) // potential mod by 0
+#endif
+
 // ███████ ████████ ██████  ██    ██  ██████ ████████ ███████
 // ██         ██    ██   ██ ██    ██ ██         ██    ██
 // ███████    ██    ██████  ██    ██ ██         ██    ███████
@@ -1302,7 +1304,7 @@ typedef struct {
     uint32_t channel;
     uint32_t lane;
     uint32_t chunk_size;
-    sfetch_callback_t callback;
+    void (*callback) (const sfetch_response_t*);
     sfetch_range_t buffer;
 
     /* updated by IO-thread, off-limits to user thread */
@@ -2809,4 +2811,9 @@ SOKOL_API_IMPL void sfetch_cancel(sfetch_handle_t h) {
         item->user.cancel = true;
     }
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
 #endif /* SOKOL_FETCH_IMPL */
